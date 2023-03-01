@@ -1,5 +1,5 @@
 [package]
-name = "student-db"
+name = "student_db"
 version = "0.1.0"
 edition = "2021"
 
