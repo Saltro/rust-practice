@@ -1,49 +1,35 @@
-use mysql::{
-    prelude::{BinQuery, TextQuery, WithParams},
-    Pool,
-};
+use postgres::{Client, Error, NoTls};
 
 use super::entity::Student;
 
-pub fn select_all() -> Result<Vec<Student>, String> {
-    let url = "mysql://rust:123456@localhost:3306/student-db";
-    let pool = Pool::new(url).unwrap();
-    let conn = pool.get_conn().unwrap();
-    let res = "select * from students".map(conn, |(id, student_id, name, gender, grade, note)| {
-        Student {
-            id,
-            student_id,
-            name,
-            gender,
-            grade,
-            note,
-        }
-    });
-    match res {
-        Ok(v) => Ok(v),
-        Err(_) => Err("Mysql error".to_string()),
-    }
+pub fn select_all() -> Result<Vec<Student>, Error> {
+    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
+    let res = client
+        .query("select * from students", &[])?
+        .iter()
+        .map(|row| Student {
+            id: row.get(0),
+            student_id: row.get(1),
+            name: row.get(2),
+            gender: row.get(3),
+            grade: row.get(4),
+            note: row.get(5),
+        })
+        .collect();
+    Ok(res)
 }
 
-pub fn select(id: u64) -> Result<Student, String> {
-    let url = "mysql://rust:123456@localhost:3306/student-db";
-    let pool = Pool::new(url).unwrap();
-    let conn = pool.get_conn().unwrap();
-    let res = "select * from students where id=?".with((id,)).first(conn);
-    match res {
-        Ok(s) => match s {
-            Some((id, student_id, name, gender, grade, note)) => Ok(Student {
-                id,
-                student_id,
-                name,
-                gender,
-                grade,
-                note,
-            }),
-            None => Err("Student not found".to_string()),
-        },
-        Err(e) => Err(e.to_string()),
-    }
+pub fn select(id: i32) -> Result<Student, Error> {
+    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
+    let row = client.query_one("select * from students where id=$1", &[&id])?;
+    Ok(Student {
+        id: row.get(0),
+        student_id: row.get(1),
+        name: row.get(2),
+        gender: row.get(3),
+        grade: row.get(4),
+        note: row.get(5),
+    })
 }
 
 pub struct CreateStudent {
@@ -54,26 +40,18 @@ pub struct CreateStudent {
     pub note: Option<String>,
 }
 
-pub fn create(data: CreateStudent) -> Result<u64, String> {
-    let url = "mysql://rust:123456@localhost:3306/student-db";
-    let pool = Pool::new(url).unwrap();
-    let conn = pool.get_conn().unwrap();
-    let res = "insert into students (student_id, name, gender, grade, note) values (?, ?, ?, ?, ?)"
-        .with((
-            data.student_id,
-            data.name,
-            data.gender,
-            data.grade,
-            data.note,
-        ))
-        .run(conn);
-    match res {
-        Ok(s) => match s.last_insert_id() {
-            Some(i) => Ok(i),
-            None => Err("Create error".to_string()),
-        },
-        Err(e) => Err(e.to_string()),
-    }
+pub fn create(data: CreateStudent) -> Result<u64, Error> {
+    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
+    client.execute(
+        "insert into students (student_id, name, gender, grade, note) values ($1, $2, $3, $4, $5)",
+        &[
+            &data.student_id,
+            &data.name,
+            &data.gender,
+            &data.grade,
+            &data.note,
+        ],
+    )
 }
 
 pub struct UpdateStudent {
@@ -84,22 +62,17 @@ pub struct UpdateStudent {
     pub note: Option<String>,
 }
 
-pub fn update(id: u64, data: UpdateStudent) -> Result<u64, String> {
-    let url = "mysql://rust:123456@localhost:3306/student-db";
-    let pool = Pool::new(url).unwrap();
-    let conn = pool.get_conn().unwrap();
-    let res = "update students set student_id=?, name=?, gender=?, grade=?, note=? where id=?"
-        .with((
-            data.student_id,
-            data.name,
-            data.gender,
-            data.grade,
-            data.note,
-            id,
-        ))
-        .run(conn);
-    match res {
-        Ok(s) => Ok(s.affected_rows()),
-        Err(e) => Err(e.to_string()),
-    }
+pub fn update(id: i32, data: UpdateStudent) -> Result<u64, Error> {
+    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
+    client.execute(
+        "update students set student_id=$1, name=$2, gender=$3, grade=$4, note=$5 where id=$6",
+        &[
+            &data.student_id,
+            &data.name,
+            &data.gender,
+            &data.grade,
+            &data.note,
+            &id,
+        ],
+    )
 }
