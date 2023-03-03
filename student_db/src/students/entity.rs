@@ -5,5 +5,5 @@ pub struct Student {
     pub name: String,
     pub gender: i32,
     pub grade: Option<i32>,
-    pub note: Option<String>
+    pub note: Option<String>,
 }

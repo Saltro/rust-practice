@@ -3,7 +3,10 @@ use postgres::{Client, Error, NoTls};
 use super::entity::Student;
 
 pub fn select_all() -> Result<Vec<Student>, Error> {
-    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
+    let mut client = Client::connect(
+        "host=localhost user=postgres password=111111 dbname=student_db",
+        NoTls,
+    )?;
     let res = client
         .query("select * from students", &[])?
         .iter()
@@ -20,7 +23,10 @@ pub fn select_all() -> Result<Vec<Student>, Error> {
 }
 
 pub fn select(id: i32) -> Result<Student, Error> {
-    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
+    let mut client = Client::connect(
+        "host=localhost user=postgres password=111111 dbname=student_db",
+        NoTls,
+    )?;
     let row = client.query_one("select * from students where id=$1", &[&id])?;
     Ok(Student {
         id: row.get(0),
@@ -40,10 +46,13 @@ pub struct CreateStudent {
     pub note: Option<String>,
 }
 
-pub fn create(data: CreateStudent) -> Result<u64, Error> {
-    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
-    client.execute(
-        "insert into students (student_id, name, gender, grade, note) values ($1, $2, $3, $4, $5)",
+pub fn create(data: CreateStudent) -> Result<Student, Error> {
+    let mut client = Client::connect(
+        "host=localhost user=postgres password=111111 dbname=student_db",
+        NoTls,
+    )?;
+    client.query_one(
+        "insert into students (student_id, name, gender, grade, note) values ($1, $2, $3, $4, $5) returning *",
         &[
             &data.student_id,
             &data.name,
@@ -51,7 +60,14 @@ pub fn create(data: CreateStudent) -> Result<u64, Error> {
             &data.grade,
             &data.note,
         ],
-    )
+    ).map(|row| Student {
+        id: row.get(0),
+        student_id: row.get(1),
+        name: row.get(2),
+        gender: row.get(3),
+        grade: row.get(4),
+        note: row.get(5),
+    })
 }
 
 pub struct UpdateStudent {
@@ -62,10 +78,13 @@ pub struct UpdateStudent {
     pub note: Option<String>,
 }
 
-pub fn update(id: i32, data: UpdateStudent) -> Result<u64, Error> {
-    let mut client = Client::connect("host=localhost user=postgres password=111111 dbname=student_db", NoTls)?;
-    client.execute(
-        "update students set student_id=$1, name=$2, gender=$3, grade=$4, note=$5 where id=$6",
+pub fn update(id: i32, data: UpdateStudent) -> Result<Student, Error> {
+    let mut client = Client::connect(
+        "host=localhost user=postgres password=111111 dbname=student_db",
+        NoTls,
+    )?;
+    client.query_one(
+        "update students set student_id=$1, name=$2, gender=$3, grade=$4, note=$5 where id=$6 returning *",
         &[
             &data.student_id,
             &data.name,
@@ -74,5 +93,29 @@ pub fn update(id: i32, data: UpdateStudent) -> Result<u64, Error> {
             &data.note,
             &id,
         ],
-    )
+    ).map(|row| Student {
+        id: row.get(0),
+        student_id: row.get(1),
+        name: row.get(2),
+        gender: row.get(3),
+        grade: row.get(4),
+        note: row.get(5),
+    })
+}
+
+pub fn delete(id: i32) -> Result<Student, Error> {
+    let mut client = Client::connect(
+        "host=localhost user=postgres password=111111 dbname=student_db",
+        NoTls,
+    )?;
+    client
+        .query_one("delete from students where id=$1 returning *", &[&id])
+        .map(|row| Student {
+            id: row.get(0),
+            student_id: row.get(1),
+            name: row.get(2),
+            gender: row.get(3),
+            grade: row.get(4),
+            note: row.get(5),
+        })
 }
