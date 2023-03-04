@@ -1,12 +1,10 @@
-use postgres::{Client, Error, NoTls};
+use postgres::Error;
 
 use super::entity::Student;
+use crate::utils::DB_CLIENT;
 
 pub fn select_all() -> Result<Vec<Student>, Error> {
-    let mut client = Client::connect(
-        "host=localhost user=postgres password=111111 dbname=student_db",
-        NoTls,
-    )?;
+    let mut client = DB_CLIENT.lock().unwrap();
     let res = client
         .query("select * from students", &[])?
         .iter()
@@ -23,10 +21,7 @@ pub fn select_all() -> Result<Vec<Student>, Error> {
 }
 
 pub fn select(id: i32) -> Result<Student, Error> {
-    let mut client = Client::connect(
-        "host=localhost user=postgres password=111111 dbname=student_db",
-        NoTls,
-    )?;
+    let mut client = DB_CLIENT.lock().unwrap();
     let row = client.query_one("select * from students where id=$1", &[&id])?;
     Ok(Student {
         id: row.get(0),
@@ -47,10 +42,7 @@ pub struct CreateStudent {
 }
 
 pub fn create(data: CreateStudent) -> Result<Student, Error> {
-    let mut client = Client::connect(
-        "host=localhost user=postgres password=111111 dbname=student_db",
-        NoTls,
-    )?;
+    let mut client = DB_CLIENT.lock().unwrap();
     client.query_one(
         "insert into students (student_id, name, gender, grade, note) values ($1, $2, $3, $4, $5) returning *",
         &[
@@ -71,10 +63,7 @@ pub fn create(data: CreateStudent) -> Result<Student, Error> {
 }
 
 pub fn update(id: i32, data: CreateStudent) -> Result<Student, Error> {
-    let mut client = Client::connect(
-        "host=localhost user=postgres password=111111 dbname=student_db",
-        NoTls,
-    )?;
+    let mut client = DB_CLIENT.lock().unwrap();
     client.query_one(
         "update students set student_id=$1, name=$2, gender=$3, grade=$4, note=$5 where id=$6 returning *",
         &[
@@ -96,10 +85,7 @@ pub fn update(id: i32, data: CreateStudent) -> Result<Student, Error> {
 }
 
 pub fn delete(id: i32) -> Result<Student, Error> {
-    let mut client = Client::connect(
-        "host=localhost user=postgres password=111111 dbname=student_db",
-        NoTls,
-    )?;
+    let mut client = DB_CLIENT.lock().unwrap();
     client
         .query_one("delete from students where id=$1 returning *", &[&id])
         .map(|row| Student {
