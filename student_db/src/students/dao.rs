@@ -70,15 +70,7 @@ pub fn create(data: CreateStudent) -> Result<Student, Error> {
     })
 }
 
-pub struct UpdateStudent {
-    pub student_id: Option<String>,
-    pub name: Option<String>,
-    pub gender: Option<i32>,
-    pub grade: Option<i32>,
-    pub note: Option<String>,
-}
-
-pub fn update(id: i32, data: UpdateStudent) -> Result<Student, Error> {
+pub fn update(id: i32, data: CreateStudent) -> Result<Student, Error> {
     let mut client = Client::connect(
         "host=localhost user=postgres password=111111 dbname=student_db",
         NoTls,

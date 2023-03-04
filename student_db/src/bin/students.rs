@@ -16,10 +16,10 @@ fn main() {
     match create(data) {
         Ok(s) => {
             println!("Create student success: {:?}", s);
-            let data = UpdateStudent {
-                student_id: Some(s.student_id),
-                name: Some(s.name),
-                gender: Some(s.gender),
+            let data = CreateStudent {
+                student_id: s.student_id,
+                name: s.name,
+                gender: s.gender,
                 grade: s.grade,
                 note: Some("Test user".to_string()),
             };
