@@ -13,18 +13,20 @@ fn main() {
     };
     match create(data) {
         Ok(s) => {
-            println!("Create course success: {:?}", s);
+            println!("Create course success: {}", s);
+            let course = select(s).unwrap();
+            println!("Select course: {:?}", s);
             let data = CreateCourse {
-                course_id: s.course_id,
-                name: s.name,
+                course_id: course.course_id,
+                name: course.name,
                 teacher_id: 2,
             };
-            match update(s.id, data) {
-                Ok(s) => println!("Update course success: {:?}", s),
+            match update(s, data) {
+                Ok(s) => println!("Update course success: {}", s),
                 Err(e) => println!("Update error: {}", e),
             };
-            match delete(s.id) {
-                Ok(s) => println!("Delete course success: {:?}", s),
+            match delete(s) {
+                Ok(s) => println!("Delete course success: {}", s),
                 Err(e) => println!("Update error: {}", e),
             };
         }
